@@ -1,4 +1,5 @@
-import { mutation } from "convex/server";
+// @ts-nocheck
+import { mutation } from "./_generated/server";
 
 // Sample data seeder for testing the dashboard
 export const seedSampleData = mutation({

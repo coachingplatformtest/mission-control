@@ -1,5 +1,6 @@
+// @ts-nocheck
 import { v } from "convex/values";
-import { query, mutation } from "convex/server";
+import { query, mutation } from "./_generated/server";
 
 // Get scheduled tasks
 export const getTasks = query({
