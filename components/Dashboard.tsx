@@ -174,7 +174,7 @@ function DashboardWithConvex() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {allTasks?.filter((t) => t.status === "active").length || 0}
+              {allTasks?.filter((t: any) => t.status === "active").length || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-2">Scheduled automations</p>
           </CardContent>

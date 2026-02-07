@@ -78,7 +78,7 @@ function CalendarViewWithConvex() {
       tasksByDay[dayKey] = [];
     }
 
-    tasks.forEach((task) => {
+    tasks.forEach((task: any) => {
       if (task.nextRun) {
         const taskDate = new Date(task.nextRun);
         const dayKey = taskDate.toISOString().split("T")[0];
@@ -128,7 +128,7 @@ function CalendarViewWithConvex() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-500">
-                {allTasks.filter((t) => t.status === "active").length}
+                {allTasks.filter((t: any) => t.status === "active").length}
               </div>
             </CardContent>
           </Card>
@@ -146,7 +146,7 @@ function CalendarViewWithConvex() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-500">
-                {allTasks.filter((t) => t.status === "paused").length}
+                {allTasks.filter((t: any) => t.status === "paused").length}
               </div>
             </CardContent>
           </Card>
