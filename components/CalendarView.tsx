@@ -7,9 +7,45 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTime, formatDate, getWeekRange, getDayOfWeek } from "@/lib/utils";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, AlertCircle, Calendar } from "lucide-react";
+import { useConvexAvailable } from "@/app/ConvexClientProvider";
 
-export function CalendarView() {
+function CalendarViewNoConvex() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
+        <p className="text-muted-foreground mt-2">Weekly view of scheduled tasks</p>
+      </div>
+
+      <Card className="border-yellow-500/50 bg-yellow-500/10">
+        <CardContent className="flex items-center gap-4 py-6">
+          <AlertCircle className="h-8 w-8 text-yellow-500" />
+          <div>
+            <h3 className="font-semibold">Convex Not Configured</h3>
+            <p className="text-sm text-muted-foreground">
+              Set NEXT_PUBLIC_CONVEX_URL to enable task scheduling.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Scheduled Tasks</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Calendar className="h-12 w-12 text-muted-foreground mb-2" />
+            <p className="text-muted-foreground">No scheduled tasks</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function CalendarViewWithConvex() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { start, end } = getWeekRange(currentDate);
 
@@ -47,7 +83,7 @@ export function CalendarView() {
         const taskDate = new Date(task.nextRun);
         const dayKey = taskDate.toISOString().split("T")[0];
         if (tasksByDay[dayKey]) {
-          tasksByDay[dayKey].push(task);
+          tasksByDay[dayKey]!.push(task);
         }
       }
     });
@@ -72,9 +108,7 @@ export function CalendarView() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
-        <p className="text-muted-foreground mt-2">
-          Weekly view of scheduled tasks
-        </p>
+        <p className="text-muted-foreground mt-2">Weekly view of scheduled tasks</p>
       </div>
 
       {/* Stats */}
@@ -148,8 +182,7 @@ export function CalendarView() {
             <div className="grid grid-cols-7 gap-4">
               {Object.entries(tasksByDay).map(([dayKey, dayTasks]) => {
                 const dayDate = new Date(dayKey);
-                const isToday =
-                  dayDate.toDateString() === new Date().toDateString();
+                const isToday = dayDate.toDateString() === new Date().toDateString();
                 return (
                   <div
                     key={dayKey}
@@ -161,16 +194,12 @@ export function CalendarView() {
                       <div className="text-xs font-medium text-muted-foreground">
                         {getDayOfWeek(dayDate.getTime())}
                       </div>
-                      <div
-                        className={`text-lg font-bold ${
-                          isToday ? "text-primary" : ""
-                        }`}
-                      >
+                      <div className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>
                         {dayDate.getDate()}
                       </div>
                     </div>
                     <div className="space-y-2">
-                      {dayTasks.length === 0 ? (
+                      {!dayTasks || dayTasks.length === 0 ? (
                         <p className="text-xs text-muted-foreground text-center py-4">
                           No tasks
                         </p>
@@ -181,9 +210,7 @@ export function CalendarView() {
                             className="rounded-md border border-border bg-card p-2 space-y-1"
                           >
                             <div className="flex items-start justify-between gap-1">
-                              <p className="text-xs font-medium line-clamp-2">
-                                {task.name}
-                              </p>
+                              <p className="text-xs font-medium line-clamp-2">{task.name}</p>
                             </div>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Clock className="h-3 w-3" />
@@ -234,21 +261,14 @@ export function CalendarView() {
                   <div className="space-y-1">
                     <h4 className="font-semibold">{task.name}</h4>
                     {task.description && (
-                      <p className="text-sm text-muted-foreground">
-                        {task.description}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{task.description}</p>
                     )}
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="font-mono">{task.schedule}</span>
-                      {task.nextRun && (
-                        <span>Next: {formatDate(task.nextRun)}</span>
-                      )}
+                      {task.nextRun && <span>Next: {formatDate(task.nextRun)}</span>}
                     </div>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={getStatusColor(task.status)}
-                  >
+                  <Badge variant="outline" className={getStatusColor(task.status)}>
                     {task.status}
                   </Badge>
                 </div>
@@ -259,4 +279,14 @@ export function CalendarView() {
       </Card>
     </div>
   );
+}
+
+export function CalendarView() {
+  const convexAvailable = useConvexAvailable();
+  
+  if (!convexAvailable) {
+    return <CalendarViewNoConvex />;
+  }
+
+  return <CalendarViewWithConvex />;
 }

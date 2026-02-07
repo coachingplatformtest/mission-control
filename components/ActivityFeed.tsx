@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTimestamp, getActionTypeColor, getActionTypeIcon } from "@/lib/utils";
 import { useState } from "react";
-import { Filter } from "lucide-react";
+import { Filter, AlertCircle, Activity } from "lucide-react";
+import { useConvexAvailable } from "@/app/ConvexClientProvider";
 
 const actionTypes = [
   "all",
@@ -18,7 +19,44 @@ const actionTypes = [
   "task_scheduled",
 ];
 
-export function ActivityFeed() {
+function ActivityFeedNoConvex() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Activity Feed</h1>
+        <p className="text-muted-foreground mt-2">
+          Real-time log of all AI assistant actions
+        </p>
+      </div>
+
+      <Card className="border-yellow-500/50 bg-yellow-500/10">
+        <CardContent className="flex items-center gap-4 py-6">
+          <AlertCircle className="h-8 w-8 text-yellow-500" />
+          <div>
+            <h3 className="font-semibold">Convex Not Configured</h3>
+            <p className="text-sm text-muted-foreground">
+              Set NEXT_PUBLIC_CONVEX_URL to enable activity logging.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activities</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Activity className="h-12 w-12 text-muted-foreground mb-2" />
+            <p className="text-muted-foreground">No activities yet</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ActivityFeedWithConvex() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [dateRange, setDateRange] = useState<{ start?: number; end?: number }>({});
 
@@ -62,7 +100,7 @@ export function ActivityFeed() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{count}</div>
+                <div className="text-2xl font-bold">{count as number}</div>
               </CardContent>
             </Card>
           ))}
@@ -155,4 +193,14 @@ export function ActivityFeed() {
       </Card>
     </div>
   );
+}
+
+export function ActivityFeed() {
+  const convexAvailable = useConvexAvailable();
+  
+  if (!convexAvailable) {
+    return <ActivityFeedNoConvex />;
+  }
+
+  return <ActivityFeedWithConvex />;
 }

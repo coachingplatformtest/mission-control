@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText, Calendar, Brain } from "lucide-react";
+import { Search, FileText, Calendar, Brain, AlertCircle } from "lucide-react";
 import { formatTimestamp } from "@/lib/utils";
+import { useConvexAvailable } from "@/app/ConvexClientProvider";
 
 const searchTypes = [
   { value: "all", label: "All", icon: Search },
@@ -17,7 +18,64 @@ const searchTypes = [
   { value: "task", label: "Tasks", icon: Calendar },
 ];
 
-export function GlobalSearch() {
+function GlobalSearchNoConvex() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Global Search</h1>
+        <p className="text-muted-foreground mt-2">
+          Search across memory files, documents, and scheduled tasks
+        </p>
+      </div>
+
+      <Card className="border-yellow-500/50 bg-yellow-500/10">
+        <CardContent className="flex items-center gap-4 py-6">
+          <AlertCircle className="h-8 w-8 text-yellow-500" />
+          <div>
+            <h3 className="font-semibold">Convex Not Configured</h3>
+            <p className="text-sm text-muted-foreground">
+              Set NEXT_PUBLIC_CONVEX_URL to enable search functionality.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Search Tips */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Search Tips</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-semibold mb-2">What you can search:</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <Brain className="h-4 w-4 text-purple-500" />
+                <span>
+                  <strong>Memory files:</strong> AI assistant's persistent memory and learnings
+                </span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-blue-500" />
+                <span>
+                  <strong>Documents:</strong> Project documentation and notes
+                </span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-green-500" />
+                <span>
+                  <strong>Tasks:</strong> Scheduled cron jobs and automation
+                </span>
+              </li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function GlobalSearchWithConvex() {
   const [query, setQuery] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -143,10 +201,7 @@ export function GlobalSearch() {
                             <h4 className="font-semibold group-hover:text-primary transition-colors">
                               {result.title}
                             </h4>
-                            <Badge
-                              variant="outline"
-                              className={getTypeColor(result.type)}
-                            >
+                            <Badge variant="outline" className={getTypeColor(result.type)}>
                               {result.type}
                             </Badge>
                           </div>
@@ -155,9 +210,7 @@ export function GlobalSearch() {
                           </p>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="font-mono">{result.filePath}</span>
-                            <span>
-                              Updated {formatTimestamp(result.lastUpdated)}
-                            </span>
+                            <span>Updated {formatTimestamp(result.lastUpdated)}</span>
                           </div>
                         </div>
                       </div>
@@ -183,8 +236,7 @@ export function GlobalSearch() {
                 <li className="flex items-center gap-2">
                   <Brain className="h-4 w-4 text-purple-500" />
                   <span>
-                    <strong>Memory files:</strong> AI assistant's persistent memory
-                    and learnings
+                    <strong>Memory files:</strong> AI assistant's persistent memory and learnings
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -214,4 +266,14 @@ export function GlobalSearch() {
       )}
     </div>
   );
+}
+
+export function GlobalSearch() {
+  const convexAvailable = useConvexAvailable();
+  
+  if (!convexAvailable) {
+    return <GlobalSearchNoConvex />;
+  }
+
+  return <GlobalSearchWithConvex />;
 }

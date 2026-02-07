@@ -5,21 +5,139 @@ import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Activity, Calendar, Search, TrendingUp, Zap } from "lucide-react";
+import { Activity, Calendar, Search, TrendingUp, Zap, AlertCircle } from "lucide-react";
 import { formatTimestamp, getActionTypeColor, getActionTypeIcon } from "@/lib/utils";
 import Link from "next/link";
+import { useConvexAvailable } from "@/app/ConvexClientProvider";
 
-export function Dashboard() {
-  const recentActivities = useQuery(api.activities.getActivities, {
-    limit: 5,
-  });
+function ConvexNotConfigured() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight">Mission Control</h1>
+        <p className="text-muted-foreground mt-2 text-lg">
+          Command center for Iterone AI Assistant
+        </p>
+      </div>
 
+      <Card className="border-yellow-500/50 bg-yellow-500/10">
+        <CardContent className="flex items-center gap-4 py-6">
+          <AlertCircle className="h-8 w-8 text-yellow-500" />
+          <div>
+            <h3 className="font-semibold">Convex Not Configured</h3>
+            <p className="text-sm text-muted-foreground">
+              Set NEXT_PUBLIC_CONVEX_URL environment variable to enable data persistence.
+              Run <code className="bg-muted px-1 rounded">npx convex dev</code> to set up Convex.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats with zeros */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/10 to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Total Activities</CardTitle>
+              <Activity className="h-4 w-4 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground mt-2">All-time actions logged</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-500/20 bg-gradient-to-br from-green-500/10 to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Active Tasks</CardTitle>
+              <Calendar className="h-4 w-4 text-green-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground mt-2">Scheduled automations</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">File Edits</CardTitle>
+              <TrendingUp className="h-4 w-4 text-purple-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground mt-2">Files modified</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-orange-500/20 bg-gradient-to-br from-orange-500/10 to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">System Status</CardTitle>
+              <Zap className="h-4 w-4 text-orange-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-yellow-500" />
+              <span className="text-xl font-bold text-yellow-500">Limited</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Convex not configured</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Navigate to key features</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Link href="/activity">
+              <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
+                <Activity className="h-6 w-6 text-primary" />
+                <div className="text-left">
+                  <div className="font-semibold">Activity Feed</div>
+                  <div className="text-xs text-muted-foreground">View all AI actions</div>
+                </div>
+              </Button>
+            </Link>
+            <Link href="/calendar">
+              <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
+                <Calendar className="h-6 w-6 text-green-500" />
+                <div className="text-left">
+                  <div className="font-semibold">Calendar</div>
+                  <div className="text-xs text-muted-foreground">Manage scheduled tasks</div>
+                </div>
+              </Button>
+            </Link>
+            <Link href="/search">
+              <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
+                <Search className="h-6 w-6 text-purple-500" />
+                <div className="text-left">
+                  <div className="font-semibold">Global Search</div>
+                  <div className="text-xs text-muted-foreground">Search everything</div>
+                </div>
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function DashboardWithConvex() {
+  const recentActivities = useQuery(api.activities.getActivities, { limit: 5 });
   const activityStats = useQuery(api.activities.getActivityStats, {});
-
-  const upcomingTasks = useQuery(api.scheduledTasks.getTasks, {
-    status: "active",
-  });
-
+  const upcomingTasks = useQuery(api.scheduledTasks.getTasks, { status: "active" });
   const allTasks = useQuery(api.scheduledTasks.getTasks, {});
 
   return (
@@ -37,17 +155,13 @@ export function Dashboard() {
         <Card className="border-primary/20 bg-gradient-to-br from-primary/10 to-transparent">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">
-                Total Activities
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Total Activities</CardTitle>
               <Activity className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{activityStats?.total || 0}</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              All-time actions logged
-            </p>
+            <p className="text-xs text-muted-foreground mt-2">All-time actions logged</p>
           </CardContent>
         </Card>
 
@@ -62,9 +176,7 @@ export function Dashboard() {
             <div className="text-3xl font-bold">
               {allTasks?.filter((t) => t.status === "active").length || 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Scheduled automations
-            </p>
+            <p className="text-xs text-muted-foreground mt-2">Scheduled automations</p>
           </CardContent>
         </Card>
 
@@ -76,12 +188,8 @@ export function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {activityStats?.byType?.file_edit || 0}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Files modified
-            </p>
+            <div className="text-3xl font-bold">{activityStats?.byType?.file_edit || 0}</div>
+            <p className="text-xs text-muted-foreground mt-2">Files modified</p>
           </CardContent>
         </Card>
 
@@ -97,9 +205,7 @@ export function Dashboard() {
               <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
               <span className="text-xl font-bold text-green-500">Active</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              All systems operational
-            </p>
+            <p className="text-xs text-muted-foreground mt-2">All systems operational</p>
           </CardContent>
         </Card>
       </div>
@@ -114,9 +220,7 @@ export function Dashboard() {
                 <CardDescription>Latest actions from the AI assistant</CardDescription>
               </div>
               <Link href="/activity">
-                <Button variant="ghost" size="sm">
-                  View all
-                </Button>
+                <Button variant="ghost" size="sm">View all</Button>
               </Link>
             </div>
           </CardHeader>
@@ -142,9 +246,7 @@ export function Dashboard() {
                     </div>
                     <div className="flex-1 space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-sm truncate">
-                          {activity.title}
-                        </h4>
+                        <h4 className="font-semibold text-sm truncate">{activity.title}</h4>
                         <Badge
                           variant="outline"
                           className={`${getActionTypeColor(activity.actionType)} text-xs flex-shrink-0`}
@@ -152,9 +254,7 @@ export function Dashboard() {
                           {activity.actionType.replace("_", " ")}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {formatTimestamp(activity.timestamp)}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{formatTimestamp(activity.timestamp)}</p>
                     </div>
                   </div>
                 ))}
@@ -172,9 +272,7 @@ export function Dashboard() {
                 <CardDescription>Next scheduled automations</CardDescription>
               </div>
               <Link href="/calendar">
-                <Button variant="ghost" size="sm">
-                  View calendar
-                </Button>
+                <Button variant="ghost" size="sm">View calendar</Button>
               </Link>
             </div>
           </CardHeader>
@@ -196,17 +294,10 @@ export function Dashboard() {
                     className="flex items-center justify-between rounded-lg border border-border p-3"
                   >
                     <div className="space-y-1 flex-1 min-w-0">
-                      <h4 className="font-semibold text-sm truncate">
-                        {task.name}
-                      </h4>
-                      <p className="text-xs font-mono text-muted-foreground">
-                        {task.schedule}
-                      </p>
+                      <h4 className="font-semibold text-sm truncate">{task.name}</h4>
+                      <p className="text-xs font-mono text-muted-foreground">{task.schedule}</p>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className="bg-green-500/10 text-green-500 border-green-500/20 flex-shrink-0"
-                    >
+                    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 flex-shrink-0">
                       {task.status}
                     </Badge>
                   </div>
@@ -226,44 +317,29 @@ export function Dashboard() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <Link href="/activity">
-              <Button
-                variant="outline"
-                className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent"
-              >
+              <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
                 <Activity className="h-6 w-6 text-primary" />
                 <div className="text-left">
                   <div className="font-semibold">Activity Feed</div>
-                  <div className="text-xs text-muted-foreground">
-                    View all AI actions
-                  </div>
+                  <div className="text-xs text-muted-foreground">View all AI actions</div>
                 </div>
               </Button>
             </Link>
             <Link href="/calendar">
-              <Button
-                variant="outline"
-                className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent"
-              >
+              <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
                 <Calendar className="h-6 w-6 text-green-500" />
                 <div className="text-left">
                   <div className="font-semibold">Calendar</div>
-                  <div className="text-xs text-muted-foreground">
-                    Manage scheduled tasks
-                  </div>
+                  <div className="text-xs text-muted-foreground">Manage scheduled tasks</div>
                 </div>
               </Button>
             </Link>
             <Link href="/search">
-              <Button
-                variant="outline"
-                className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent"
-              >
+              <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
                 <Search className="h-6 w-6 text-purple-500" />
                 <div className="text-left">
                   <div className="font-semibold">Global Search</div>
-                  <div className="text-xs text-muted-foreground">
-                    Search everything
-                  </div>
+                  <div className="text-xs text-muted-foreground">Search everything</div>
                 </div>
               </Button>
             </Link>
@@ -272,4 +348,14 @@ export function Dashboard() {
       </Card>
     </div>
   );
+}
+
+export function Dashboard() {
+  const convexAvailable = useConvexAvailable();
+  
+  if (!convexAvailable) {
+    return <ConvexNotConfigured />;
+  }
+
+  return <DashboardWithConvex />;
 }
