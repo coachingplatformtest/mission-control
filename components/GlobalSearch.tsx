@@ -185,7 +185,7 @@ function GlobalSearchWithConvex() {
               </div>
             ) : (
               <div className="space-y-4">
-                {results.map((result) => {
+                {results.map((result: any) => {
                   const Icon = getTypeIcon(result.type);
                   return (
                     <div

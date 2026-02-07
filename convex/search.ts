@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation, action } from "./_generated/server";
+import { query, mutation, action } from "convex/server";
 import { api } from "./_generated/api";
 
 // Index a document for search

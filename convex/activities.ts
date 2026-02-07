@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation } from "convex/server";
 
 // Log a new activity
 export const logActivity = mutation({

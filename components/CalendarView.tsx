@@ -204,7 +204,7 @@ function CalendarViewWithConvex() {
                           No tasks
                         </p>
                       ) : (
-                        dayTasks.map((task) => (
+                        dayTasks.map((task: any) => (
                           <div
                             key={task._id}
                             className="rounded-md border border-border bg-card p-2 space-y-1"
@@ -253,7 +253,7 @@ function CalendarViewWithConvex() {
             </div>
           ) : (
             <div className="space-y-3">
-              {allTasks.map((task) => (
+              {allTasks.map((task: any) => (
                 <div
                   key={task._id}
                   className="flex items-center justify-between rounded-lg border border-border p-4"

@@ -236,7 +236,7 @@ function DashboardWithConvex() {
               </div>
             ) : (
               <div className="space-y-3">
-                {recentActivities.map((activity) => (
+                {recentActivities.map((activity: any) => (
                   <div
                     key={activity._id}
                     className="flex items-start gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent/50"
@@ -288,7 +288,7 @@ function DashboardWithConvex() {
               </div>
             ) : (
               <div className="space-y-3">
-                {upcomingTasks.slice(0, 5).map((task) => (
+                {upcomingTasks.slice(0, 5).map((task: any) => (
                   <div
                     key={task._id}
                     className="flex items-center justify-between rounded-lg border border-border p-3"

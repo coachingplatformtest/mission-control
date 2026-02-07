@@ -153,7 +153,7 @@ function ActivityFeedWithConvex() {
             </div>
           ) : (
             <div className="space-y-4">
-              {activities.map((activity) => (
+              {activities.map((activity: any) => (
                 <div
                   key={activity._id}
                   className="flex items-start gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
