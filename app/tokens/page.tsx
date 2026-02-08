@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Coins, TrendingUp, TrendingDown, User, Clock, Zap } from "lucide-react";
+import { Gauge, User, Clock, Activity } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const AGENT_COLORS: Record<string, string> = {
@@ -34,14 +34,8 @@ function formatTokens(count: number): string {
   return count.toString();
 }
 
-// Estimate cost based on Claude Opus pricing (~$15/1M input, ~$75/1M output)
-function estimateCost(tokensIn: number, tokensOut: number): string {
-  const inputCost = (tokensIn / 1000000) * 15;
-  const outputCost = (tokensOut / 1000000) * 75;
-  const total = inputCost + outputCost;
-  if (total < 0.01) return "<$0.01";
-  return `$${total.toFixed(2)}`;
-}
+// Session limit is 200k context window
+const SESSION_LIMIT = 200000;
 
 export default function TokensPage() {
   // Get stats for different time periods
@@ -54,22 +48,42 @@ export default function TokensPage() {
     startDate: todayStart.getTime(),
   });
 
+  // Get this week's stats (Mon-Sun)
+  const weekStart = new Date();
+  const day = weekStart.getDay();
+  const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1); // Monday
+  weekStart.setDate(diff);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekStats = useQuery(api.activities.getActivityStats, {
+    startDate: weekStart.getTime(),
+  });
+
   // Get recent activities with tokens
   const recentActivities = useQuery(api.activities.getActivities, { limit: 20 });
   const activitiesWithTokens = recentActivities?.filter(
     (a: any) => a.tokensIn || a.tokensOut
   );
 
-  const loading = allTimeStats === undefined || todayStats === undefined;
+  const loading = allTimeStats === undefined || todayStats === undefined || weekStats === undefined;
+
+  // Calculate per-agent token totals (from activities with token data)
+  const agentTokens: Record<string, { input: number; output: number }> = {};
+  activitiesWithTokens?.forEach((a: any) => {
+    if (!agentTokens[a.agent]) {
+      agentTokens[a.agent] = { input: 0, output: 0 };
+    }
+    agentTokens[a.agent].input += a.tokensIn || 0;
+    agentTokens[a.agent].output += a.tokensOut || 0;
+  });
 
   return (
     <DashboardLayout>
       <div className="space-y-4 sm:space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Token Tracker</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">Token Usage</h1>
           <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-lg">
-            Monitor AI token usage and costs
+            Track session and weekly token limits
           </p>
         </div>
 
@@ -79,78 +93,88 @@ export default function TokensPage() {
           </div>
         ) : (
           <>
-            {/* Today's Summary - Big mobile-first card */}
+            {/* Session Limit Card */}
             <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-transparent to-transparent">
               <CardHeader className="pb-2 sm:pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base sm:text-lg font-medium flex items-center gap-2">
-                    <Coins className="h-5 w-5 text-cyan-500" />
-                    Today&apos;s Usage
+                    <Gauge className="h-5 w-5 text-cyan-500" />
+                    Session Limit
                   </CardTitle>
                   <Badge variant="outline" className="text-xs">
-                    {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                    Resets every 5 hours
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center py-2">
                   <div className="text-4xl sm:text-5xl font-bold text-cyan-500">
-                    {formatTokens((todayStats?.tokens?.total) || 0)}
+                    200k
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">tokens used today</p>
+                  <p className="text-sm text-muted-foreground mt-1">context window per session</p>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-green-500/10 p-3 text-center">
-                    <TrendingDown className="h-4 w-4 text-green-500 mx-auto mb-1" />
-                    <div className="text-xl sm:text-2xl font-bold text-green-500">
-                      {formatTokens(todayStats?.tokens?.input || 0)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Input</p>
+                {/* Visual limit bar */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>0</span>
+                    <span>200k</span>
                   </div>
-                  <div className="rounded-xl bg-orange-500/10 p-3 text-center">
-                    <TrendingUp className="h-4 w-4 text-orange-500 mx-auto mb-1" />
-                    <div className="text-xl sm:text-2xl font-bold text-orange-500">
-                      {formatTokens(todayStats?.tokens?.output || 0)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Output</p>
+                  <div className="h-4 rounded-full bg-muted overflow-hidden">
+                    <div 
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all"
+                      style={{ width: "0%" }}
+                    />
                   </div>
-                </div>
-
-                <div className="flex items-center justify-center gap-2 pt-2 border-t border-border/50">
-                  <Zap className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm text-muted-foreground">Est. cost:</span>
-                  <span className="font-semibold text-yellow-500">
-                    {estimateCost(todayStats?.tokens?.input || 0, todayStats?.tokens?.output || 0)}
-                  </span>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Context usage tracked per-session (resets on compaction)
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* All Time Stats */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium">All Time</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-bold">
-                      {formatTokens(allTimeStats?.tokens?.total || 0)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatTokens(allTimeStats?.tokens?.input || 0)} in / {formatTokens(allTimeStats?.tokens?.output || 0)} out
-                    </p>
+            {/* Weekly & Today Stats */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-emerald-500" />
+                    This Week
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-emerald-500">
+                    {formatTokens(weekStats?.tokens?.total || 0)}
                   </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-yellow-500">
-                      {estimateCost(allTimeStats?.tokens?.input || 0, allTimeStats?.tokens?.output || 0)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">total cost</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatTokens(weekStats?.tokens?.input || 0)} in / {formatTokens(weekStats?.tokens?.output || 0)} out
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {weekStats?.total || 0} activities
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-amber-500" />
+                    Today
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-amber-500">
+                    {formatTokens(todayStats?.tokens?.total || 0)}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatTokens(todayStats?.tokens?.input || 0)} in / {formatTokens(todayStats?.tokens?.output || 0)} out
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {todayStats?.total || 0} activities
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Per-Agent Breakdown */}
             <Card>
@@ -161,51 +185,56 @@ export default function TokensPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {Object.entries(allTimeStats?.byAgent || {}).map(([agent, count]) => {
-                    const percentage = allTimeStats?.total 
-                      ? Math.round(((count as number) / allTimeStats.total) * 100)
-                      : 0;
-                    return (
-                      <div key={agent} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className={`h-3 w-3 rounded-full ${AGENT_COLORS[agent] || "bg-gray-500"}`} />
-                            <span className="font-medium">{AGENT_LABELS[agent] || agent}</span>
+                <div className="space-y-4">
+                  {Object.entries(agentTokens).length > 0 ? (
+                    Object.entries(agentTokens)
+                      .sort((a, b) => (b[1].input + b[1].output) - (a[1].input + a[1].output))
+                      .map(([agent, tokens]) => {
+                        const total = tokens.input + tokens.output;
+                        const maxTokens = Math.max(...Object.values(agentTokens).map(t => t.input + t.output));
+                        const percentage = maxTokens > 0 ? (total / maxTokens) * 100 : 0;
+                        
+                        return (
+                          <div key={agent} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className={`h-3 w-3 rounded-full ${AGENT_COLORS[agent] || "bg-gray-500"}`} />
+                                <span className="font-medium text-sm">{AGENT_LABELS[agent] || agent}</span>
+                              </div>
+                              <span className="text-sm font-mono">
+                                {formatTokens(total)}
+                              </span>
+                            </div>
+                            <div className="h-2 rounded-full bg-muted overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full transition-all ${AGENT_COLORS[agent] || "bg-gray-500"}`}
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>{formatTokens(tokens.input)} in</span>
+                              <span>{formatTokens(tokens.output)} out</span>
+                            </div>
                           </div>
-                          <span className="text-muted-foreground">
-                            {count as number} activities ({percentage}%)
-                          </span>
-                        </div>
-                        <div className="h-2 rounded-full bg-muted overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all ${AGENT_COLORS[agent] || "bg-gray-500"}`}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {Object.keys(allTimeStats?.byAgent || {}).length === 0 && (
+                        );
+                      })
+                  ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No agent activity yet
+                      No agent token data yet. Agents will log usage as they work.
                     </p>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Recent Token-Heavy Activities */}
+            {/* Recent Token Activity */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Recent Token Usage
-                </CardTitle>
+                <CardTitle className="text-base font-medium">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {activitiesWithTokens?.slice(0, 10).map((activity: any) => (
+                  {activitiesWithTokens?.slice(0, 8).map((activity: any) => (
                     <div 
                       key={activity._id}
                       className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50 transition-colors"
@@ -214,14 +243,11 @@ export default function TokensPage() {
                         <div className={`h-2 w-2 rounded-full flex-shrink-0 ${AGENT_COLORS[activity.agent] || "bg-gray-500"}`} />
                         <span className="text-sm truncate">{activity.title}</span>
                       </div>
-                      <div className="flex items-center gap-3 flex-shrink-0 text-xs">
-                        <span className="text-green-500 font-mono">
-                          {formatTokens(activity.tokensIn || 0)}↓
+                      <div className="flex items-center gap-2 flex-shrink-0 text-xs">
+                        <span className="font-mono text-muted-foreground">
+                          {formatTokens((activity.tokensIn || 0) + (activity.tokensOut || 0))}
                         </span>
-                        <span className="text-orange-500 font-mono">
-                          {formatTokens(activity.tokensOut || 0)}↑
-                        </span>
-                        <span className="text-muted-foreground w-16 text-right">
+                        <span className="text-muted-foreground">
                           {formatDistanceToNow(activity.timestamp, { addSuffix: true }).replace("about ", "")}
                         </span>
                       </div>
