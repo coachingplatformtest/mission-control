@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Activity, Calendar, Search, TrendingUp, Zap, AlertCircle } from "lucide-react";
+import { Activity, Calendar, Search, TrendingUp, Zap, AlertCircle, Coins } from "lucide-react";
 import { formatTimestamp, getActionTypeColor, getActionTypeIcon } from "@/lib/utils";
 import Link from "next/link";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
@@ -151,7 +151,7 @@ function DashboardWithConvex() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card className="border-primary/20 bg-gradient-to-br from-primary/10 to-transparent">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -190,6 +190,26 @@ function DashboardWithConvex() {
           <CardContent>
             <div className="text-3xl font-bold">{activityStats?.byType?.file_edit || 0}</div>
             <p className="text-xs text-muted-foreground mt-2">Files modified</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Tokens Used</CardTitle>
+              <Coins className="h-4 w-4 text-cyan-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {activityStats?.tokens?.total 
+                ? `${(activityStats.tokens.total / 1000).toFixed(1)}k` 
+                : '0'}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {activityStats?.tokens?.input ? `In: ${(activityStats.tokens.input / 1000).toFixed(1)}k` : 'In: 0'} / {' '}
+              {activityStats?.tokens?.output ? `Out: ${(activityStats.tokens.output / 1000).toFixed(1)}k` : 'Out: 0'}
+            </p>
           </CardContent>
         </Card>
 

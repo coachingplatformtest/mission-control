@@ -5,15 +5,20 @@ export default defineSchema({
   // Activity log for tracking all AI actions
   activities: defineTable({
     timestamp: v.number(),
-    actionType: v.string(), // "file_edit", "message_sent", "search", "tool_use", etc.
+    actionType: v.string(), // "task_started", "progress", "task_completed", "file_edit", etc.
     title: v.string(),
     details: v.optional(v.string()),
-    agent: v.optional(v.string()), // "iterone", "product", "builder", "qa"
+    agent: v.optional(v.string()), // "iterone", "product", "design", "builder", "bug"
+    // Token tracking
+    tokensIn: v.optional(v.number()),
+    tokensOut: v.optional(v.number()),
+    durationMs: v.optional(v.number()),
     metadata: v.optional(v.object({
       filePath: v.optional(v.string()),
       toolName: v.optional(v.string()),
       searchQuery: v.optional(v.string()),
       result: v.optional(v.string()),
+      commitHash: v.optional(v.string()),
     })),
   }).index("by_timestamp", ["timestamp"])
     .index("by_action_type", ["actionType"])

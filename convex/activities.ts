@@ -8,12 +8,16 @@ export const logActivity = mutation({
     actionType: v.string(),
     title: v.string(),
     details: v.optional(v.string()),
-    agent: v.optional(v.string()), // "iterone", "product", "builder", "qa"
+    agent: v.optional(v.string()), // "iterone", "product", "design", "builder", "bug"
+    tokensIn: v.optional(v.number()),
+    tokensOut: v.optional(v.number()),
+    durationMs: v.optional(v.number()),
     metadata: v.optional(v.object({
       filePath: v.optional(v.string()),
       toolName: v.optional(v.string()),
       searchQuery: v.optional(v.string()),
       result: v.optional(v.string()),
+      commitHash: v.optional(v.string()),
     })),
   },
   handler: async (ctx, args) => {
@@ -23,6 +27,9 @@ export const logActivity = mutation({
       title: args.title,
       details: args.details,
       agent: args.agent || "iterone",
+      tokensIn: args.tokensIn,
+      tokensOut: args.tokensOut,
+      durationMs: args.durationMs,
       metadata: args.metadata,
     });
     return activityId;
@@ -93,13 +100,30 @@ export const getActivityStats = query({
 
     // Count by action type
     const typeCount: Record<string, number> = {};
+    // Count by agent
+    const agentCount: Record<string, number> = {};
+    // Token totals
+    let totalTokensIn = 0;
+    let totalTokensOut = 0;
+    
     activities.forEach((activity) => {
       typeCount[activity.actionType] = (typeCount[activity.actionType] || 0) + 1;
+      if (activity.agent) {
+        agentCount[activity.agent] = (agentCount[activity.agent] || 0) + 1;
+      }
+      if (activity.tokensIn) totalTokensIn += activity.tokensIn;
+      if (activity.tokensOut) totalTokensOut += activity.tokensOut;
     });
 
     return {
       total: activities.length,
       byType: typeCount,
+      byAgent: agentCount,
+      tokens: {
+        input: totalTokensIn,
+        output: totalTokensOut,
+        total: totalTokensIn + totalTokensOut,
+      },
     };
   },
 });

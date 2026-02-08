@@ -39,6 +39,9 @@ http.route({
         details: body.details,
         metadata: body.metadata,
         agent: body.agent || "iterone", // Default to iterone
+        tokensIn: body.tokensIn,
+        tokensOut: body.tokensOut,
+        durationMs: body.durationMs,
       });
 
       return new Response(
