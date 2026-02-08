@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Activity, Calendar, Search, TrendingUp, Zap, AlertCircle, Coins } from "lucide-react";
+import { Activity, Calendar, Search, TrendingUp, Zap, AlertCircle, Coins, ChartLine } from "lucide-react";
 import { formatTimestamp, getActionTypeColor, getActionTypeIcon } from "@/lib/utils";
 import Link from "next/link";
 import { useConvexAvailable } from "@/app/ConvexClientProvider";
@@ -99,13 +99,22 @@ function ConvexNotConfigured() {
           <CardDescription>Navigate to key features</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <Link href="/activity">
               <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
                 <Activity className="h-6 w-6 text-primary" />
                 <div className="text-left">
                   <div className="font-semibold">Activity Feed</div>
                   <div className="text-xs text-muted-foreground">View all AI actions</div>
+                </div>
+              </Button>
+            </Link>
+            <Link href="/tokens">
+              <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
+                <Coins className="h-6 w-6 text-cyan-500" />
+                <div className="text-left">
+                  <div className="font-semibold">Token Tracker</div>
+                  <div className="text-xs text-muted-foreground">Monitor usage & costs</div>
                 </div>
               </Button>
             </Link>
@@ -335,13 +344,22 @@ function DashboardWithConvex() {
           <CardDescription>Navigate to key features</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <Link href="/activity">
               <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
                 <Activity className="h-6 w-6 text-primary" />
                 <div className="text-left">
                   <div className="font-semibold">Activity Feed</div>
                   <div className="text-xs text-muted-foreground">View all AI actions</div>
+                </div>
+              </Button>
+            </Link>
+            <Link href="/tokens">
+              <Button variant="outline" className="h-auto flex-col items-start gap-2 p-4 w-full hover:bg-accent">
+                <Coins className="h-6 w-6 text-cyan-500" />
+                <div className="text-left">
+                  <div className="font-semibold">Token Tracker</div>
+                  <div className="text-xs text-muted-foreground">Monitor usage & costs</div>
                 </div>
               </Button>
             </Link>

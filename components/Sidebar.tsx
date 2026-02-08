@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Activity, Calendar, Search, Home } from "lucide-react";
+import { Activity, Calendar, Search, Home, Coins } from "lucide-react";
 
 const routes = [
   {
@@ -15,6 +15,11 @@ const routes = [
     label: "Activity Feed",
     icon: Activity,
     href: "/activity",
+  },
+  {
+    label: "Tokens",
+    icon: Coins,
+    href: "/tokens",
   },
   {
     label: "Calendar",
