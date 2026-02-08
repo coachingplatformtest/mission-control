@@ -9,6 +9,7 @@
  */
 
 import type * as activities from "../activities.js";
+import type * as http from "../http.js";
 import type * as scheduledTasks from "../scheduledTasks.js";
 import type * as search from "../search.js";
 import type * as seedData from "../seedData.js";
@@ -21,6 +22,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
+  http: typeof http;
   scheduledTasks: typeof scheduledTasks;
   search: typeof search;
   seedData: typeof seedData;

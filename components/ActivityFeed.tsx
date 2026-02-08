@@ -19,6 +19,19 @@ const actionTypes = [
   "task_scheduled",
 ];
 
+const agents = [
+  { id: "all", label: "All Agents", color: "bg-slate-500" },
+  { id: "iterone", label: "🔁 Iterone (Lead)", color: "bg-purple-500" },
+  { id: "product", label: "💡 Product", color: "bg-blue-500" },
+  { id: "builder", label: "🔨 Builder", color: "bg-green-500" },
+  { id: "qa", label: "🧪 QA", color: "bg-orange-500" },
+];
+
+function getAgentBadge(agentId: string | undefined) {
+  const agent = agents.find(a => a.id === agentId) || agents.find(a => a.id === "iterone");
+  return agent;
+}
+
 function ActivityFeedNoConvex() {
   return (
     <div className="space-y-6">
@@ -58,11 +71,13 @@ function ActivityFeedNoConvex() {
 
 function ActivityFeedWithConvex() {
   const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [dateRange, setDateRange] = useState<{ start?: number; end?: number }>({});
 
   const activities = useQuery(api.activities.getActivities, {
     limit: 50,
     actionType: selectedType === "all" ? undefined : selectedType,
+    agent: selectedAgent === "all" ? undefined : selectedAgent,
     startDate: dateRange.start,
     endDate: dateRange.end,
   });
@@ -115,18 +130,40 @@ function ActivityFeedWithConvex() {
             Filters
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {actionTypes.map((type) => (
-              <Button
-                key={type}
-                variant={selectedType === type ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedType(type)}
-              >
-                {type === "all" ? "All" : type.replace("_", " ")}
-              </Button>
-            ))}
+        <CardContent className="space-y-4">
+          {/* Agent Filter */}
+          <div>
+            <p className="text-sm font-medium mb-2">By Agent</p>
+            <div className="flex flex-wrap gap-2">
+              {agents.map((agent) => (
+                <Button
+                  key={agent.id}
+                  variant={selectedAgent === agent.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedAgent(agent.id)}
+                  className={selectedAgent === agent.id ? agent.color : ""}
+                >
+                  {agent.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Action Type Filter */}
+          <div>
+            <p className="text-sm font-medium mb-2">By Action</p>
+            <div className="flex flex-wrap gap-2">
+              {actionTypes.map((type) => (
+                <Button
+                  key={type}
+                  variant={selectedType === type ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedType(type)}
+                >
+                  {type === "all" ? "All" : type.replace("_", " ")}
+                </Button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -153,40 +190,48 @@ function ActivityFeedWithConvex() {
             </div>
           ) : (
             <div className="space-y-4">
-              {activities.map((activity: any) => (
-                <div
-                  key={activity._id}
-                  className="flex items-start gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xl">
-                    {getActionTypeIcon(activity.actionType)}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{activity.title}</h4>
-                      <Badge
-                        variant="outline"
-                        className={getActionTypeColor(activity.actionType)}
-                      >
-                        {activity.actionType.replace("_", " ")}
-                      </Badge>
+              {activities.map((activity: any) => {
+                const agentInfo = getAgentBadge(activity.agent);
+                return (
+                  <div
+                    key={activity._id}
+                    className="flex items-start gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xl">
+                      {getActionTypeIcon(activity.actionType)}
                     </div>
-                    {activity.details && (
-                      <p className="text-sm text-muted-foreground">
-                        {activity.details}
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold">{activity.title}</h4>
+                        <Badge
+                          variant="outline"
+                          className={getActionTypeColor(activity.actionType)}
+                        >
+                          {activity.actionType.replace("_", " ")}
+                        </Badge>
+                        {agentInfo && (
+                          <Badge variant="secondary" className="text-xs">
+                            {agentInfo.label}
+                          </Badge>
+                        )}
+                      </div>
+                      {activity.details && (
+                        <p className="text-sm text-muted-foreground">
+                          {activity.details}
+                        </p>
+                      )}
+                      {activity.metadata?.filePath && (
+                        <p className="text-xs font-mono text-muted-foreground">
+                          {activity.metadata.filePath}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {formatTimestamp(activity.timestamp)}
                       </p>
-                    )}
-                    {activity.metadata?.filePath && (
-                      <p className="text-xs font-mono text-muted-foreground">
-                        {activity.metadata.filePath}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {formatTimestamp(activity.timestamp)}
-                    </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

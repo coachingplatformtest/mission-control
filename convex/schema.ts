@@ -8,6 +8,7 @@ export default defineSchema({
     actionType: v.string(), // "file_edit", "message_sent", "search", "tool_use", etc.
     title: v.string(),
     details: v.optional(v.string()),
+    agent: v.optional(v.string()), // "iterone", "product", "builder", "qa"
     metadata: v.optional(v.object({
       filePath: v.optional(v.string()),
       toolName: v.optional(v.string()),
@@ -16,6 +17,7 @@ export default defineSchema({
     })),
   }).index("by_timestamp", ["timestamp"])
     .index("by_action_type", ["actionType"])
+    .index("by_agent", ["agent"])
     .index("by_timestamp_and_type", ["timestamp", "actionType"]),
 
   // Search index for memory files, documents, and tasks
