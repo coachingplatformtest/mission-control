@@ -89,4 +89,66 @@ http.route({
   }),
 });
 
+// POST /api/tasks - Create a scheduled task
+http.route({
+  path: "/api/tasks",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      
+      if (!body.name || !body.nextRun) {
+        return new Response(
+          JSON.stringify({ error: "name and nextRun are required" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      const taskId = await ctx.runMutation(api.scheduledTasks.upsertTask, {
+        name: body.name,
+        schedule: body.schedule || "one-time",
+        description: body.description,
+        status: body.status || "active",
+        nextRun: body.nextRun,
+        metadata: body.metadata,
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, taskId }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    } catch (error) {
+      console.error("Error creating task:", error);
+      return new Response(
+        JSON.stringify({ error: "Internal server error" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }),
+});
+
+// GET /api/tasks - Get scheduled tasks
+http.route({
+  path: "/api/tasks",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status") || undefined;
+
+    try {
+      const tasks = await ctx.runQuery(api.scheduledTasks.getTasks, { status });
+      return new Response(JSON.stringify(tasks), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      return new Response(
+        JSON.stringify({ error: "Internal server error" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }),
+});
+
 export default http;

@@ -8,10 +8,10 @@ Test everything before Monday 11 PM reset. Mark with ✅ or ❌ and add notes.
 
 | Test | Steps | Expected | Result |
 |------|-------|----------|--------|
-| Coach login | Sign in as coach | Redirects to /coach | |
-| Client login | Sign in as client | Redirects to /client | |
-| Admin login | Sign in as admin | Redirects to /admin | |
-| Role protection | Try /admin as coach | Should block/redirect | |
+| Coach login | Sign in as coach | Redirects to /coach |✅|
+| Client login | Sign in as client | Redirects to /client |✅|
+| Admin login | Sign in as admin | Redirects to /admin |✅|
+| Role protection | Try /admin as coach | Should block/redirect |✅| - works but it shows admin screen for a little bit, I don't want users to see that at all. If role is not correct, it should just auto redirect with no time to see anything
 
 ---
 
@@ -21,8 +21,8 @@ Test everything before Monday 11 PM reset. Mark with ✅ or ❌ and add notes.
 
 | Test | Steps | Expected | Result |
 |------|-------|----------|--------|
-| Offline indicator | Turn on airplane mode, open app | Shows "Offline - using cached data" banner | |
-| Cached data loads | While offline, navigate to training | Shows cached program data | |
+| Offline indicator | Turn on airplane mode, open app | Shows "Offline - using cached data" banner |✅|
+| Cached data loads | While offline, navigate to training | Shows cached program data |❌| - You can view the training page, but you get a somethign went wrong error if you try to click on a specific day. Clicking "go home" gives a "safari cant open page the error was: "response served by service worker has resdirection""
 | Log workout offline | Log a set while offline | Saves locally, shows "will sync" | |
 | Auto-sync on reconnect | Turn off airplane mode | Shows "Syncing..." then "Synced ✓" | |
 | Data persists | Refresh after sync | Logged data still there | |
